@@ -50,7 +50,7 @@ module.exports = {
     }),
     new webpack.ProvidePlugin({ 'window.decomp': 'poly-decomp' }),
     new CopyWebpackPlugin([
-      { from: 'src/samples', to: 'samples' }
+      { from: 'src/assets', to: 'assets' }
     ])
   ]
 }
