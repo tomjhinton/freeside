@@ -247,8 +247,7 @@ function animate() {
 
   if(platThreeArr.filter(x=> x.position.z > mesh.position.z).length === platThreeArr.length && playing){
     totalScore += platThreeArr.length
-    body.position.x = 0
-    body.position.y = 0
+    
     body.position.z = 0
     world.gravity.y -= 5
     console.log(world.gravity)
