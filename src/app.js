@@ -8,11 +8,28 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 const keys =[]
 document.body.addEventListener('keydown', function (e) {
-e.preventDefault()
+  e.preventDefault()
 
 
   if(e.keyCode===82){
   //reset
+
+    score = 0
+    totalScore = 0
+    body.position.x = 0
+    body.position.y = 0
+    body.position.z = 0
+    body.velocity.z = 0
+    body.velocity.x = 0
+    body.velocity.y = 0
+    mesh.position.y =  0
+    body.angularVelocity.x =  0
+    body.angularVelocity.z =  0
+    body.angularVelocity.y =  0
+    body.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
+    console.log(body)
+    playing = true
+    scoreboard.innerHTML = 'SCORE: '+ (score +totalScore)
 
   }
 
@@ -30,8 +47,9 @@ var world, mass, body, shape, timeStep=1/60,
 camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform, physicsMaterial, ballShape, ballBody, radius, balls=[], ballMeshes=[], group, controls,   ballMaterial, ballContactMaterial, platCanArr = [], platThreeArr = [], physicsContactMaterial, score = 0, playerMaterial, playerContactMaterial, wallMaterial, wallContactMaterial,  playing = true
 initGame()
 animate()
+let totalScore = 0
 const scoreboard = document.getElementById('score')
-scoreboard.innerHTML = 'SCORE: '+ score
+scoreboard.innerHTML = 'SCORE: '+ (score +totalScore)
 
 
 
@@ -77,17 +95,13 @@ function initGame() {
 
 
 
-
-
-
-
-
   scene = new THREE.Scene()
   //camera
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 )
   camera.position.x = -0.20861329770365564
-  camera.position.y =  6.488600711758697
+  camera.position.y =  8.488600711758697
   camera.position.z = 62.37277465856009
+
 
 
   scene.add( camera )
@@ -95,7 +109,7 @@ function initGame() {
   var Alight = new THREE.AmbientLight( 0x404040 ) // soft white light
   scene.add( Alight )
   const light = new THREE.DirectionalLight( 0xffffff )
-  light.position.set( 40, 25, 10 )
+  light.position.set( 0, 200, -110 )
   light.castShadow = true
   scene.add(light)
 
@@ -113,24 +127,24 @@ function initGame() {
 
 
 function createPlatform(x,y,z){
-  groundShape = new CANNON.Box(new CANNON.Vec3(10,10,1))
-  groundBody = new CANNON.Body({ mass: 0, material: wallMaterial })
-  groundBody.addShape(groundShape)
-  groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
-  groundBody.position.set(0,0,0)
-  groundBody.position.x = x
-  groundBody.position.y = y
-  groundBody.position.z = z
+    groundShape = new CANNON.Box(new CANNON.Vec3(10,10,1))
+    groundBody = new CANNON.Body({ mass: 0, material: wallMaterial })
+    groundBody.addShape(groundShape)
+    groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
+    groundBody.position.set(0,0,0)
+    groundBody.position.x = x
+    groundBody.position.y = y
+    groundBody.position.z = z
 
-  world.addBody(groundBody)
-  platCanArr.push(groundBody)
+    world.addBody(groundBody)
+    platCanArr.push(groundBody)
 
 
-  platform = new THREE.BoxGeometry( 20, 20, 2 )
-  material =  new THREE.MeshPhongMaterial( { color: `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},1)`, specular: `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},1)` , shininess: 100, side: THREE.DoubleSide, opacity: 0.8,
-    transparent: false } )
+    platform = new THREE.BoxGeometry( 20, 20, 2 )
+    material =  new THREE.MeshPhongMaterial( { color: `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},1)`, specular: `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},1)` , shininess: 100, side: THREE.DoubleSide, opacity: 0.8,
+      transparent: false } )
 
-    let platMesh = new THREE.Mesh( platform, material )
+    const platMesh = new THREE.Mesh( platform, material )
 
     platMesh.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
     platMesh.position.x = x
@@ -139,15 +153,15 @@ function createPlatform(x,y,z){
 
     scene.add(platMesh)
     platThreeArr.push(platMesh)
-}
+  }
 
 
-createPlatform(0,-20,0)
+  createPlatform(0,-20,0)
 
-for(let i=1;i<25;i ++ ){
-createPlatform(Math.random()*80,-20,-40*i)
+  for(let i=1;i<25;i ++ ){
+    createPlatform(Math.random()*80,-20,-40*i)
 
-}
+  }
 
 
   const game = document.getElementById('game')
@@ -218,43 +232,61 @@ const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world )
 
 
 
-
+let time = 0
 function animate() {
-
+  score = platThreeArr.filter(x=> x.position.z > mesh.position.z).length
+  time+=0.01
   camera.position.x = mesh.position.x+ 0.20861329770365564
   camera.position.y = mesh.position.y + 9.488600711758697
-  camera.position.z = mesh.position.z+ 42.37277465856009
+  camera.position.z = mesh.position.z+ 52.37277465856009
+
+  if(platThreeArr.filter(x=> x.position.y < mesh.position.y).length ===0){
+
+    playing = false
+  }
+
+  if(platThreeArr.filter(x=> x.position.z > mesh.position.z).length === platThreeArr.length && playing){
+    totalScore += platThreeArr.length
+    body.position.x = 0
+    body.position.y = 0
+    body.position.z = 0
+    world.gravity.y -= 5
+    console.log(world.gravity)
+  }
+
 
   if (keys[32]  ) {
 
-      // up arrow or space
-      body.velocity.y +=1.4
+    // up arrow or space
+    body.velocity.y +=1.4
 
 
-    }if (keys[39]) {
+  }if (keys[39]) {
     // right arrow
-      body.velocity.x +=0.4
+    body.velocity.x +=0.4
 
-    }
-    if (keys[37]) {         // left arrow
-        body.velocity.x -=0.4
-    }
-    if (keys[38]) {         // left arrow
-        body.velocity.z -=0.4
-    }
-    if (keys[40]) {         // left arrow
-        body.velocity.z +=0.4
-    }
+  }
+  if (keys[37]) {         // left arrow
+    body.velocity.x -=0.4
+  }
+  if (keys[38]) {         // left arrow
+    body.velocity.z -=0.4
+  }
+  if (keys[40]) {         // left arrow
+    body.velocity.z +=0.4
+  }
 
-    for(let i=0;i<platThreeArr.length;i++){
-  if(i%2===0){
+  for(let i=1;i<platThreeArr.length;i++){
+    if(i%2===0){
       platThreeArr[i].rotation.z += 0.01
+
     }
 
-    if(i%2!==0){
-        platThreeArr[i].rotation.y += 0.001
-      }
+    if(i%3===0 && i%2!==0 ){
+      platThreeArr[i].rotation.y += 0.01
+      platThreeArr[i].position.x = i*10+ Math.sin(time) * 20
     }
+  }
 
 
   if(scoreboard && !playing){
@@ -266,7 +298,7 @@ function animate() {
     //cannonDebugRenderer.update()
   }
   if(scoreboard && playing){
-    scoreboard.innerHTML ='SCORE: '+ score
+    scoreboard.innerHTML = 'SCORE: '+ (score +totalScore)
   }
 
   //controls.update()
