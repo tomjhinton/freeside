@@ -4,8 +4,75 @@ import './style.scss'
 import './debug.js'
 import 'bulma'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import '@fortawesome/fontawesome-free'
+let ready = false
+//sounds
+import * as mm from '@magenta/music'
+
+const musicRNN= new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/drum_kit_rnn')
+let player
+const  twinkle = {
+  notes: [
+    {pitch: 60, startTime: 0.0, endTime: 0.5},
+    {pitch: 60, startTime: 0.5, endTime: 1.0},
+    {pitch: 67, startTime: 1.0, endTime: 1.5},
+    {pitch: 67, startTime: 1.5, endTime: 2.0},
+    {pitch: 69, startTime: 2.0, endTime: 2.5},
+    {pitch: 69, startTime: 2.5, endTime: 3.0},
+    {pitch: 67, startTime: 3.0, endTime: 4.0},
+    {pitch: 65, startTime: 4.0, endTime: 4.5},
+    {pitch: 65, startTime: 4.5, endTime: 5.0},
+    {pitch: 64, startTime: 5.0, endTime: 5.5},
+    {pitch: 64, startTime: 5.5, endTime: 6.0},
+    {pitch: 62, startTime: 6.0, endTime: 6.5},
+    {pitch: 62, startTime: 6.5, endTime: 7.0},
+    {pitch: 60, startTime: 7.0, endTime: 8.0}
+  ],
+  totalTime: 8
+}
 
 
+const rnnSteps = 400
+const rnnTemperature = 1.5
+
+
+
+function generate(input){
+  const qns = mm.sequences.quantizeNoteSequence(input, 2)
+  musicRNN
+    .continueSequence(qns, rnnSteps, rnnTemperature)
+    .then((sample) => {
+
+      for(let i=0;i<sample.notes.length;i++){
+        if(i%2===0){
+          sample.notes[i].isDrum = false
+        }
+      }
+
+
+
+
+      player = new mm.Player(false, {
+        run: () => {
+          if(!ready){
+            loading.classList.add('hide')
+            initGame()
+            animate()
+          }
+        },
+        stop: () => {
+          console.log('done')
+          player.start(sample)
+        }
+
+      })
+
+      player.start(sample)
+
+
+    })
+}
+//generate(twinkle)
 const keys =[]
 document.body.addEventListener('keydown', function (e) {
   e.preventDefault()
@@ -43,17 +110,41 @@ document.body.addEventListener('keyup', function (e) {
 
 //CANNNON && THREE
 // Create a
-var world, mass, body, shape, timeStep=1/60,
-camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform, physicsMaterial, ballShape, ballBody, radius, balls=[], ballMeshes=[], group, controls,   ballMaterial, ballContactMaterial, platCanArr = [], platThreeArr = [], physicsContactMaterial, score = 0, playerMaterial, playerContactMaterial, wallMaterial, wallContactMaterial,  playing = true
-initGame()
-animate()
+var world, body, shape, timeStep=1/60,
+  camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform,   ballMaterial, ballContactMaterial, platCanArr = [], platThreeArr = [],  score = 0, playerMaterial, playerContactMaterial, wallMaterial, wallContactMaterial,  playing = true
+
 let totalScore = 0
 const scoreboard = document.getElementById('score')
 scoreboard.innerHTML = 'SCORE: '+ (score +totalScore)
+const loading = document.getElementById('loading')
 
+let start = false
+loading.addEventListener('click', function () {
+  loading.innerHTML ='loading...'
+  if(!start){
+    start = true
+
+    generate(twinkle)
+
+  }
+})
 
 
 function initGame() {
+  const sound = document.getElementById('sound')
+  sound.innerHTML= 'please make the bleeping stop'
+
+  sound.addEventListener('click', function (e) {
+if(sound.innerHTML=== 'please make the bleeping stop'){
+    sound.innerHTML= ''
+
+    player.stop()
+  }
+
+
+  })
+
+  ready= true
   world = new CANNON.World()
   world.gravity.set(0,-20,0)
   world.broadphase = new CANNON.NaiveBroadphase()
@@ -81,7 +172,7 @@ function initGame() {
   shape = new CANNON.Box(new CANNON.Vec3(1,1,1))
 
 
-  mass = 100
+
   body = new CANNON.Body({
     mass: 10, material: playerMaterial
   })
@@ -126,7 +217,7 @@ function initGame() {
 
 
 
-function createPlatform(x,y,z){
+  function createPlatform(x,y,z){
     groundShape = new CANNON.Box(new CANNON.Vec3(10,10,1))
     groundBody = new CANNON.Body({ mass: 0, material: wallMaterial })
     groundBody.addShape(groundShape)
@@ -165,66 +256,15 @@ function createPlatform(x,y,z){
 
 
   const game = document.getElementById('game')
-  scene.add( mesh, floor, group )
+  scene.add( mesh, floor )
   renderer = new THREE.WebGLRenderer()
   renderer.setSize( window.innerWidth-250, window.innerHeight-200 )
   game.appendChild( renderer.domElement )
-  //controls = new OrbitControls( camera, renderer.domElement )
+
+
 }
 
 
-
-function ballCreate(x,y){
-  const materialBall = new THREE.MeshPhongMaterial( { color: `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},1)`, specular: `rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},1)` , shininess: 100, side: THREE.DoubleSide, opacity: 0.8,
-    transparent: true } )
-
-  const ballGeometry = new THREE.SphereGeometry(1, 32, 32)
-  const ballMesh = new THREE.Mesh( ballGeometry, materialBall )
-  ballMesh.name = 'ball'
-  scene.add(ballMesh)
-  ballMeshes.push(ballMesh)
-
-  mass = 2, radius = 1
-
-
-  ballShape = new CANNON.Sphere(radius)
-  ballBody = new CANNON.Body({ mass: 1, material: ballMaterial })
-  ballBody.addShape(ballShape)
-  ballBody.linearDamping = 0
-  world.addBody(ballBody)
-  balls.push(ballBody)
-  ballBody.position.set(x,y,0)
-  ballBody.angularVelocity.y = 3
-  ballBody.velocity.x = 10
-  ballBody.velocity.z = -10
-  //console.log(ballBody)
-  ballBody.addEventListener('collide',function(e){
-    // console.log(e)
-    // console.log(e.body.position.y)
-
-    if(playing){
-
-
-
-      if(score > 0 && score <= 2){
-
-      }
-
-      if(score > 2 && score <= 4){
-
-      }
-
-      if(score > 4 ){
-
-      }
-    }
-    if(e.contact.bi.material.name ==='playerMaterial' || e.contact.bj.material.name ==='playerMaterial')
-      playing = false
-
-  })
-
-}
-//ballCreate(Math.floor(Math.random()*5), Math.floor(Math.random()*5))
 
 
 
@@ -247,7 +287,7 @@ function animate() {
 
   if(platThreeArr.filter(x=> x.position.z > mesh.position.z).length === platThreeArr.length && playing){
     totalScore += platThreeArr.length
-    
+
     body.position.z = 0
     world.gravity.y -= 5
     console.log(world.gravity)
@@ -257,7 +297,7 @@ function animate() {
   if (keys[32]  ) {
 
     // up arrow or space
-    body.velocity.y +=1.4
+    //body.velocity.y +=1.4
 
 
   }if (keys[39]) {
@@ -283,15 +323,22 @@ function animate() {
 
     if(i%3===0 && i%2!==0 ){
       platThreeArr[i].rotation.y += 0.01
-      platThreeArr[i].position.x = i*10+ Math.sin(time) * 20
+      platThreeArr[i].position.x = i*2+ Math.sin(time) * 20
+    }
+
+    if(i%5===0 && i%2!==0 ){
+
+      platThreeArr[i].position.y = i*2+( Math.sin(time) * 25) -20
     }
   }
+
+
 
 
   if(scoreboard && !playing){
     scoreboard.innerHTML = ' GAME OVER: R TO RESET'
   }
-  //group.rotation.y +=0.01
+
   if(cannonDebugRenderer){
 
     //cannonDebugRenderer.update()
