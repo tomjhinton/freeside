@@ -80,7 +80,9 @@ document.body.addEventListener('keydown', function (e) {
 
   if(e.keyCode===82){
   //reset
-
+    platThreeArr.map(x=>{
+      x.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
+    })
     score = 0
     totalScore = 0
     body.position.x = 0
@@ -110,8 +112,8 @@ document.body.addEventListener('keyup', function (e) {
 
 //CANNNON && THREE
 // Create a
-var world, body, shape, timeStep=1/60,
-  camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform,   ballMaterial, ballContactMaterial, platCanArr = [], platThreeArr = [],  score = 0, playerMaterial, playerContactMaterial, wallMaterial, wallContactMaterial,  playing = true
+let world, body, shape, timeStep=1/60,
+  camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform,   ballMaterial, ballContactMaterial, platCanArr = [], platThreeArr = [],  score = 0, playerMaterial, playerContactMaterial, wallMaterial, wallContactMaterial,  playing = true, version  = 0
 
 let totalScore = 0
 const scoreboard = document.getElementById('score')
@@ -134,12 +136,12 @@ function initGame() {
   const sound = document.getElementById('sound')
   sound.innerHTML= 'please make the bleeping stop'
 
-  sound.addEventListener('click', function (e) {
-if(sound.innerHTML=== 'please make the bleeping stop'){
-    sound.innerHTML= ''
+  sound.addEventListener('click', function () {
+    if(sound.innerHTML=== 'please make the bleeping stop'){
+      sound.innerHTML= ''
 
-    player.stop()
-  }
+      player.stop()
+    }
 
 
   })
@@ -287,7 +289,7 @@ function animate() {
 
   if(platThreeArr.filter(x=> x.position.z > mesh.position.z).length === platThreeArr.length && playing){
     totalScore += platThreeArr.length
-
+    version++
     body.position.z = 0
     world.gravity.y -= 5
     console.log(world.gravity)
@@ -316,20 +318,38 @@ function animate() {
   }
 
   for(let i=1;i<platThreeArr.length;i++){
-    if(i%2===0){
+    if(i%2===0 && version%2===0 ){
       platThreeArr[i].rotation.z += 0.01
 
     }
 
-    if(i%3===0 && i%2!==0 ){
+    if(i%3===0 && i%2!==0 && version%2===0){
       platThreeArr[i].rotation.y += 0.01
       platThreeArr[i].position.x = i*2+ Math.sin(time) * 20
     }
 
-    if(i%5===0 && i%2!==0 ){
+    if(i%5===0 && i%2!==0 && version%2===0){
 
       platThreeArr[i].position.y = i*2+( Math.sin(time) * 25) -20
     }
+
+    if(i%4===0 && version%2!==0 ){
+      platThreeArr[i].rotation.y += 0.01
+      platThreeArr[i].position.x = i*2+ Math.sin(time) * 20
+
+
+    }
+
+    if(i%3===0 && i%2!==0 && version%2!==0){
+      platThreeArr[i].position.y = i*2+( Math.sin(time) * 25) -20
+    }
+
+    if(i%5===0 && i%2!==0 && version%2!==0){
+      platThreeArr[i].rotation.z += 0.01
+
+    }
+
+
   }
 
 
