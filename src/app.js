@@ -3,8 +3,6 @@ const THREE = require('three')
 import './style.scss'
 import './debug.js'
 import 'bulma'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import '@fortawesome/fontawesome-free'
 let ready = false
 //sounds
 import * as mm from '@magenta/music'
@@ -61,7 +59,7 @@ function generate(input){
           }
         },
         stop: () => {
-          console.log('done')
+
           player.start(sample)
         }
 
@@ -72,7 +70,7 @@ function generate(input){
 
     })
 }
-//generate(twinkle)
+
 const keys =[]
 document.body.addEventListener('keydown', function (e) {
   e.preventDefault()
@@ -96,7 +94,7 @@ document.body.addEventListener('keydown', function (e) {
     body.angularVelocity.z =  0
     body.angularVelocity.y =  0
     body.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2)
-    console.log(body)
+
     playing = true
     scoreboard.innerHTML = 'SCORE: '+ (score +totalScore)
 
@@ -113,14 +111,14 @@ document.body.addEventListener('keyup', function (e) {
 //CANNNON && THREE
 // Create a
 let world, body, shape, timeStep=1/60,
-  camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform,   ballMaterial, ballContactMaterial, platCanArr = [], platThreeArr = [],  score = 0, playerMaterial, playerContactMaterial, wallMaterial, wallContactMaterial,  playing = true, version  = 0
+  camera, scene, renderer, geometry, material, mesh, groundBody, floor, groundShape, platform,   platCanArr = [], platThreeArr = [],  score = 0, playerMaterial, playerContactMaterial, wallMaterial,   playing = true, version  = 0, totalScore = 0, start = false
 
-let totalScore = 0
+
 const scoreboard = document.getElementById('score')
 scoreboard.innerHTML = 'SCORE: '+ (score +totalScore)
 const loading = document.getElementById('loading')
 
-let start = false
+
 loading.addEventListener('click', function () {
   loading.innerHTML ='loading...'
   if(!start){
@@ -153,24 +151,15 @@ function initGame() {
   world.solver.iterations = 10
 
   wallMaterial = new CANNON.Material('wallMaterial')
-  ballMaterial = new CANNON.Material('ballMaterial')
   playerMaterial = new CANNON.Material('playerMaterial')
 
-  wallContactMaterial = new CANNON.ContactMaterial(ballMaterial, wallMaterial)
-  wallContactMaterial.friction = 0
-  wallContactMaterial.restitution = 1
 
   playerContactMaterial = new CANNON.ContactMaterial(playerMaterial,wallMaterial)
   playerContactMaterial.friction = 0
   playerContactMaterial.restitution = 1.3
 
-  ballContactMaterial = new CANNON.ContactMaterial(ballMaterial, ballMaterial)
-  ballContactMaterial.friction = 0
-  ballContactMaterial.restitution = 1
 
-  world.addContactMaterial(ballContactMaterial)
   world.addContactMaterial(playerContactMaterial)
-  world.addContactMaterial(wallContactMaterial)
   shape = new CANNON.Box(new CANNON.Vec3(1,1,1))
 
 
@@ -267,9 +256,6 @@ function initGame() {
 }
 
 
-
-
-
 const cannonDebugRenderer = new THREE.CannonDebugRenderer( scene, world )
 
 
@@ -292,28 +278,26 @@ function animate() {
     version++
     body.position.z = 0
     world.gravity.y -= 5
-    console.log(world.gravity)
-  }
 
+  }
 
   if (keys[32]  ) {
 
-    // up arrow or space
+    // space
     //body.velocity.y +=1.4
 
-
   }if (keys[39]) {
-    // right arrow
+
     body.velocity.x +=0.4
 
   }
-  if (keys[37]) {         // left arrow
+  if (keys[37]) {
     body.velocity.x -=0.4
   }
-  if (keys[38]) {         // left arrow
+  if (keys[38]) {
     body.velocity.z -=0.4
   }
-  if (keys[40]) {         // left arrow
+  if (keys[40]) {
     body.velocity.z +=0.4
   }
 
@@ -351,9 +335,6 @@ function animate() {
 
 
   }
-
-
-
 
   if(scoreboard && !playing){
     scoreboard.innerHTML = ' GAME OVER: R TO RESET'
